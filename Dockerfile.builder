@@ -27,4 +27,8 @@ ENV ANDROID_SDK_ROOT=/opt/android-sdk \
 RUN yes | sdkmanager --licenses && \
     sdkmanager "platforms;android-33" "build-tools;33.0.0" "platform-tools"
 
+# Copy and install build script
+COPY build.sh /usr/local/bin/build.sh
+RUN chmod +x /usr/local/bin/build.sh
+
 WORKDIR /app
