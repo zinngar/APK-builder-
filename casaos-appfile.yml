@@ -32,7 +32,7 @@ services:
     x-casaos:
       displayName: APK Builder
       description: Docker-based React Native/Expo APK builder with Web UI
-      icon: https://reactnative.dev/img/pwa/manifest-icon.png
+      icon: https://cdn-icons-png.flaticon.com/512/887/887843.png
       tags:
         - Development
         - Android
@@ -42,7 +42,7 @@ services:
       port: ${WEBUI_PORT:-6050}
 
   apk-builder-build:
-    image: reactnativecommunity/react-native-android-build-env:latest
+    image: cirrusci/android-sdk:latest
     container_name: apk-builder-build
     restart: "no"
     entrypoint: ["/usr/local/bin/build.sh"]

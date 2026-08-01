@@ -5,7 +5,7 @@ name: apk-builder
 title: APK Builder
 category: Development
 description: Docker-based React Native/Expo APK builder with Web UI and real-time logging
-icon: https://raw.githubusercontent.com/zinngar/APK-builder-/main/templates/logo.png
+icon: https://cdn-icons-png.flaticon.com/512/887/887843.png
 developer: zinngar
 homepage: https://github.com/zinngar/APK-builder-
 repo: https://github.com/zinngar/APK-builder-
