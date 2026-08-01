@@ -1,0 +1,90 @@
+{
+  "name": "apk-builder",
+  "title": "APK Builder",
+  "category": "Development",
+  "description": "Docker-based React Native/Expo APK builder with Web UI and real-time logging",
+  "icon": "https://cdn-icons-png.flaticon.com/512/887/887843.png",
+  "developer": "zinngar",
+  "repo": "https://github.com/zinngar/APK-builder-",
+  "support": "https://github.com/zinngar/APK-builder-/issues",
+  "tags": [
+    "android",
+    "apk",
+    "react-native",
+    "expo",
+    "docker",
+    "build",
+    "development"
+  ],
+  "port": 6050,
+  "image": {
+    "type": "docker-compose",
+    "compose": {
+      "version": "3.8",
+      "services": {
+        "apk-builder-webui": {
+          "image": "zinngar/apk-builder:latest",
+          "container_name": "apk-builder-webui",
+          "restart": "unless-stopped",
+          "ports": [
+            "6050:6050"
+          ],
+          "environment": [
+            "PROJECT_DIR=/casaos/project",
+            "OUTPUT_DIR=/casaos/output",
+            "PROJECT_SRC_DIR=/casaos/project_src",
+            "PORT=6050"
+          ],
+          "volumes": [
+            "/var/run/docker.sock:/var/run/docker.sock",
+            "/casaos/openrasp/apk-builder/project:/casaos/project",
+            "/casaos/openrasp/apk-builder/output:/casaos/output",
+            "/casaos/openrasp/apk-builder/project_src:/casaos/project_src"
+          ],
+          "healthcheck": {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:6050/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "10s"
+          }
+        },
+        "apk-builder-build": {
+          "image": "cirrusci/android-sdk:latest",
+          "container_name": "apk-builder-build",
+          "restart": "no",
+          "entrypoint": [
+            "/usr/local/bin/build.sh"
+          ],
+          "volumes": [
+            "./build.sh:/usr/local/bin/build.sh",
+            "/casaos/openrasp/apk-builder/project_src:/app",
+            "/casaos/openrasp/apk-builder/output:/app/output",
+            "/casaos/openrasp/apk-builder/gradle_cache:/root/.gradle",
+            "/casaos/openrasp/apk-builder/npm_cache:/root/.npm"
+          ],
+          "environment": [
+            "GRADLE_OPTS=-Dorg.gradle.daemon=false"
+          ],
+          "depends_on": {
+            "apk-builder-webui": {
+              "condition": "service_healthy"
+            }
+          }
+        }
+      }
+    }
+  },
+  "scheme": "http",
+  "host": "localhost",
+  "port": 6050,
+  "web_ui": {
+    "path": "/",
+    "port": 6050
+  }
+}

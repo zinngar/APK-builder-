@@ -1,48 +1,56 @@
-version: "3.8"
-
 services:
-  trafficlites-build:
-    image: reactnativecommunity/react-native-android-build-env:latest
-    container_name: trafficlites-apk-builder
-    entrypoint: ["/usr/local/bin/build.sh"]
-    volumes:
-      # Mount the shared project source directory
-      - ./project_src:/app
-      # Mount the build script
-      - ./build.sh:/usr/local/bin/build.sh
-      # APKs land here on your host / CasaOS volume, ready for Jellyfin/NAS sharing
-      - ./output:/app/output
-      # Cache gradle deps between builds so rebuilds are fast
-      - gradle-cache:/root/.gradle
-      - npm-cache:/root/.npm
-    environment:
-      - GRADLE_OPTS=-Dorg.gradle.daemon=false
-    command: ["release"]   # default command, can be overridden by webui
-
-  webui:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: trafficlites-webui
+  apk-builder-webui:
+    image: zinngar/apk-builder-webui:latest
+    container_name: apk-builder-webui
+    restart: unless-stopped
     ports:
       - "6050:6050"
     environment:
-      - PROJECT_DIR=/project
-      - OUTPUT_DIR=/output
-      - PROJECT_SRC_DIR=/project_src
+      - PROJECT_DIR=/app
+      - OUTPUT_DIR=/app/output
+      - PROJECT_SRC_DIR=/app/project_src
       - PORT=6050
     volumes:
-      # lets the webui shell out to `docker compose run` for the builder service
       - /var/run/docker.sock:/var/run/docker.sock
-      # mount current folder for docker-compose.yml context
-      - .:/project
-      # mount output for listing APKs
-      - ./output:/output
-      # mount project source so we can clone git/extract zip
-      - ./project_src:/project_src
+      - ./:/app
+      - apk-builder-output:/app/output
+      - apk-builder-project-src:/app/project_src
+      - apk-builder-gradle-cache:/root/.gradle
+      - apk-builder-npm-cache:/root/.npm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6050/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  apk-builder-build:
+    image: zinngar/apk-builder-build:latest
+    container_name: apk-builder-build
+    restart: "no"
+    entrypoint: ["/usr/local/bin/build.sh"]
+    volumes:
+      - ./build.sh:/usr/local/bin/build.sh
+      - apk-builder-project-src:/app
+      - apk-builder-output:/app/output
+      - apk-builder-gradle-cache:/root/.gradle
+      - apk-builder-npm-cache:/root/.npm
+    environment:
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
     depends_on:
-      - trafficlites-build
+      apk-builder-webui:
+        condition: service_healthy
 
 volumes:
-  gradle-cache:
-  npm-cache:
+  apk-builder-output:
+  apk-builder-project-src:
+  apk-builder-gradle-cache:
+  apk-builder-npm-cache:
+
+x-casaos:
+  displayName: APK Builder
+  description: Docker-based React Native/Expo APK builder with Web UI
+  icon: https://cdn-icons-png.flaticon.com/512/887/887843.png
+  category: Development
+  port: 6050
+  scheme: http

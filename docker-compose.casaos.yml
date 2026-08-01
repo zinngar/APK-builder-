@@ -2,11 +2,13 @@ version: "3.8"
 
 services:
   apk-builder-webui:
-    image: zinngar/apk-builder:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: apk-builder-webui
     restart: unless-stopped
     ports:
-      - "${WEBUI_PORT:-6050}:${WEBUI_PORT:-6050}"
+      - "${WEBUI_PORT:-6050}:${PORT:-6050}"
     environment:
       - PROJECT_DIR=/casaos/project
       - OUTPUT_DIR=/casaos/output
