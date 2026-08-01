@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  trafficlites-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trafficlites-apk-builder
+    volumes:
+      # Mount your actual Trafficlites repo here (edit the left-hand path)
+      - /path/to/your/Trafficlites:/app
+      # APKs land here on your host / CasaOS volume, ready for Jellyfin/NAS sharing
+      - ./output:/app/output
+      # Cache gradle deps between builds so rebuilds are fast
+      - gradle-cache:/root/.gradle
+      - npm-cache:/root/.npm
+    environment:
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    command: ["release"]   # or "debug"
+
+  webui:
+    build:
+      context: ./webui
+    container_name: trafficlites-webui
+    ports:
+      - "5050:5050"
+    environment:
+      - PROJECT_DIR=/project
+      - OUTPUT_DIR=/output
+    volumes:
+      # lets the webui shell out to `docker compose run` for the builder service
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/project
+      - ./output:/output
+    depends_on:
+      - trafficlites-build
+
+volumes:
+  gradle-cache:
+  npm-cache:
