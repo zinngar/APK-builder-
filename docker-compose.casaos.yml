@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
   apk-builder-webui:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: zinngar/apk-builder:latest
     container_name: apk-builder-webui
     restart: unless-stopped
     ports:
