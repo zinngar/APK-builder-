@@ -23,7 +23,7 @@ services:
       context: ./webui
     container_name: trafficlites-webui
     ports:
-      - "5050:5050"
+      - "6050:6050"
     environment:
       - PROJECT_DIR=/project
       - OUTPUT_DIR=/output
