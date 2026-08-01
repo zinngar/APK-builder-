@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trafficlites APK Builder</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #111417; color: #e6e6e6;
+    max-width: 840px; margin: 40px auto; padding: 0 20px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .sub { color: #8a8f98; margin-bottom: 28px; }
+
+  .card {
+    background: #181c20;
+    border: 1px solid #2a3037;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 1.1rem;
+    color: #c8c9cc;
+    margin-top: 0;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: #8a8f98;
+    margin-bottom: 6px;
+  }
+  input[type="text"], input[type="file"] {
+    width: 100%;
+    background: #0f1215;
+    border: 1px solid #2a3037;
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #e6e6e6;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+  input[type="file"] {
+    padding: 6px;
+    cursor: pointer;
+  }
+  input:focus {
+    outline: none;
+    border-color: #2b6cee;
+  }
+
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  button {
+    background: #2b6cee; color: white; border: none; border-radius: 8px;
+    padding: 10px 18px; font-size: 0.95rem; cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  button:hover:not(:disabled) { background: #3b7cff; }
+  button.secondary { background: #2a3037; color: #e6e6e6; border: 1px solid #3a424a; }
+  button.secondary:hover:not(:disabled) { background: #343b44; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status {
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 20px;
+    font-size: 0.9rem; display: inline-block;
+    font-weight: 600;
+  }
+  .status.idle { background: #23262b; color: #8a8f98; }
+  .status.running { background: #3a3410; color: #f5c542; }
+  .status.success { background: #103a1a; color: #4ade80; }
+  .status.failed { background: #3a1010; color: #f87171; }
+
+  .action-log {
+    background: #0b0d0f; border: 1px solid #23262b; border-radius: 8px;
+    padding: 12px; font-size: 0.8rem; font-family: monospace;
+    max-height: 140px; overflow-y: auto; white-space: pre-wrap;
+    margin-top: 10px; color: #a5acb8;
+  }
+
+  pre.build-log {
+    background: #0b0d0f; border: 1px solid #23262b; border-radius: 8px;
+    padding: 14px; height: 340px; overflow-y: auto; font-size: 0.8rem;
+    white-space: pre-wrap; word-break: break-word; font-family: monospace;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  td, th { text-align: left; padding: 10px 8px; border-bottom: 1px solid #23262b; font-size: 0.85rem; }
+  th { color: #8a8f98; font-weight: 500; }
+  a.dl { color: #2b6cee; text-decoration: none; font-weight: 500; }
+  a.dl:hover { text-decoration: underline; }
+
+  .badge {
+    background: #2a3037; color: #8a8f98; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+  <h1>Trafficlites APK Builder</h1>
+  <div class="sub">Manage source code, trigger builds, and grab the built APK.</div>
+
+  <!-- Source Code Management Card -->
+  <div class="card">
+    <h2>📁 Source Code Setup</h2>
+    <div class="grid">
+      <!-- GitHub Section -->
+      <div style="border-right: 1px solid #2a3037; padding-right: 20px;">
+        <h3 style="font-size: 0.95rem; margin-top: 0; margin-bottom: 14px; color: #4ade80;">🔗 Pull from GitHub</h3>
+        <div class="form-group">
+          <label for="gitRepoUrl">Repository URL</label>
+          <input type="text" id="gitRepoUrl" placeholder="https://github.com/zinngar/7Eleven-app" value="https://github.com/zinngar/7Eleven-app">
+        </div>
+        <div class="form-group">
+          <label for="gitBranch">Branch / Tag / Commit</label>
+          <input type="text" id="gitBranch" value="master">
+        </div>
+        <button id="btnGitPull" onclick="pullFromGit()">Pull Repository</button>
+        <div id="gitLog" class="action-log" style="display: none;"></div>
+      </div>
+
+      <!-- ZIP Upload Section -->
+      <div style="padding-left: 10px;">
+        <h3 style="font-size: 0.95rem; margin-top: 0; margin-bottom: 14px; color: #3b7cff;">📤 Upload Project ZIP</h3>
+        <div class="form-group">
+          <label for="zipFileInput">Select Project ZIP File</label>
+          <input type="file" id="zipFileInput" accept=".zip">
+        </div>
+        <div class="form-group" style="margin-top: 24px;">
+          <button id="btnUploadZip" class="secondary" onclick="uploadZip()">Upload & Extract</button>
+        </div>
+        <div id="uploadLog" class="action-log" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Build Actions Card -->
+  <div class="card">
+    <h2>⚙️ Build Operations</h2>
+    <div class="row">
+      <button id="btnRelease" onclick="build('release')">🚀 Build Release APK</button>
+      <button id="btnDebug" class="secondary" onclick="build('debug')">🛠️ Build Debug APK</button>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <span style="font-size: 0.9rem; color: #8a8f98; margin-right: 8px;">Build Status:</span>
+      <div id="statusBadge" class="status idle">idle</div>
+    </div>
+
+    <pre id="log" class="build-log"></pre>
+  </div>
+
+  <!-- Available APKs -->
+  <div class="card">
+    <h2>📦 Available APKs</h2>
+    <table id="apkTable">
+      <thead><tr><th>File</th><th>Size</th><th>Built At</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('statusBadge');
+const btnRelease = document.getElementById('btnRelease');
+const btnDebug = document.getElementById('btnDebug');
+const btnGitPull = document.getElementById('btnGitPull');
+const btnUploadZip = document.getElementById('btnUploadZip');
+const gitLogEl = document.getElementById('gitLog');
+const uploadLogEl = document.getElementById('uploadLog');
+
+function setButtons(running) {
+  btnRelease.disabled = running;
+  btnDebug.disabled = running;
+  btnGitPull.disabled = running;
+  btnUploadZip.disabled = running;
+}
+
+async function pullFromGit() {
+  const repoUrl = document.getElementById('gitRepoUrl').value;
+  const branch = document.getElementById('gitBranch').value;
+  if (!repoUrl) {
+    alert('Please enter a Git repository URL');
+    return;
+  }
+
+  setButtons(true);
+  gitLogEl.style.display = 'block';
+  gitLogEl.textContent = 'Cloning repository... (this might take a few seconds)';
+
+  try {
+    const res = await fetch('/git/pull', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_url: repoUrl, branch: branch })
+    });
+    const s = await res.json();
+    if (res.ok) {
+      gitLogEl.textContent = 'Successfully cloned repo!\n\nOutput:\n' + s.output;
+    } else {
+      gitLogEl.textContent = 'Error pulling repository:\n' + (s.error || 'Unknown error') + '\n\nOutput:\n' + s.output;
+    }
+  } catch (err) {
+    gitLogEl.textContent = 'Error connecting to server: ' + err.message;
+  } finally {
+    setButtons(false);
+  }
+}
+
+async function uploadZip() {
+  const fileInput = document.getElementById('zipFileInput');
+  if (fileInput.files.length === 0) {
+    alert('Please select a project ZIP file');
+    return;
+  }
+
+  setButtons(true);
+  uploadLogEl.style.display = 'block';
+  uploadLogEl.textContent = 'Uploading ZIP file and extracting... (please wait)';
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const s = await res.json();
+    if (res.ok) {
+      uploadLogEl.textContent = 'Project uploaded and extracted successfully!';
+      fileInput.value = '';
+    } else {
+      uploadLogEl.textContent = 'Error extracting ZIP:\n' + (s.error || 'Unknown error');
+    }
+  } catch (err) {
+    uploadLogEl.textContent = 'Error connecting to server: ' + err.message;
+  } finally {
+    setButtons(false);
+  }
+}
+
+async function build(type) {
+  setButtons(true);
+  const res = await fetch(`/build/${type}`, { method: 'POST' });
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Failed to start build');
+    setButtons(false);
+    return;
+  }
+  logEl.textContent = '';
+  pollStatus();
+  streamLogs();
+}
+
+async function pollStatus() {
+  const res = await fetch('/status');
+  const s = await res.json();
+  statusEl.className = 'status ' + s.status;
+  statusEl.textContent = s.status + (s.build_type ? ` (${s.build_type})` : '');
+  setButtons(s.status === 'running');
+  if (s.status === 'running') {
+    setTimeout(pollStatus, 1500);
+  } else {
+    refreshApks();
+  }
+}
+
+async function streamLogs() {
+  const res = await fetch('/logs/stream');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    logEl.textContent += decoder.decode(value);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+async function refreshApks() {
+  const res = await fetch('/apks');
+  const apks = await res.json();
+  const tbody = document.querySelector('#apkTable tbody');
+  tbody.innerHTML = '';
+  if (apks.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8a8f98; padding: 20px;">No APKs built yet.</td></tr>';
+    return;
+  }
+  apks.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><strong>${a.name}</strong></td><td><span class="badge">${a.size_mb} MB</span></td><td>${a.modified}</td>
+      <td><a class="dl" href="/download/${a.name}">⬇️ Download</a></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// initial load
+pollStatus();
+refreshApks();
+</script>
+</body>
+</html>

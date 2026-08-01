@@ -2,13 +2,14 @@ version: "3.8"
 
 services:
   trafficlites-build:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: reactnativecommunity/react-native-android-build-env:latest
     container_name: trafficlites-apk-builder
+    entrypoint: ["/usr/local/bin/build.sh"]
     volumes:
-      # Mount your actual Trafficlites repo here (edit the left-hand path)
-      - /path/to/your/Trafficlites:/app
+      # Mount the shared project source directory
+      - ./project_src:/app
+      # Mount the build script
+      - ./build.sh:/usr/local/bin/build.sh
       # APKs land here on your host / CasaOS volume, ready for Jellyfin/NAS sharing
       - ./output:/app/output
       # Cache gradle deps between builds so rebuilds are fast
@@ -16,22 +17,29 @@ services:
       - npm-cache:/root/.npm
     environment:
       - GRADLE_OPTS=-Dorg.gradle.daemon=false
-    command: ["release"]   # or "debug"
+    command: ["release"]   # default command, can be overridden by webui
 
   webui:
     build:
-      context: ./webui
+      context: .
+      dockerfile: Dockerfile
     container_name: trafficlites-webui
     ports:
       - "6050:6050"
     environment:
       - PROJECT_DIR=/project
       - OUTPUT_DIR=/output
+      - PROJECT_SRC_DIR=/project_src
+      - PORT=6050
     volumes:
       # lets the webui shell out to `docker compose run` for the builder service
       - /var/run/docker.sock:/var/run/docker.sock
+      # mount current folder for docker-compose.yml context
       - .:/project
+      # mount output for listing APKs
       - ./output:/output
+      # mount project source so we can clone git/extract zip
+      - ./project_src:/project_src
     depends_on:
       - trafficlites-build
 
