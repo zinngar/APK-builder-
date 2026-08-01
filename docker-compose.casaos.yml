@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  apk-builder-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apk-builder-webui
+    restart: unless-stopped
+    ports:
+      - "${WEBUI_PORT:-6050}:${WEBUI_PORT:-6050}"
+    environment:
+      - PROJECT_DIR=/casaos/project
+      - OUTPUT_DIR=/casaos/output
+      - PROJECT_SRC_DIR=/casaos/project_src
+      - PORT=${WEBUI_PORT:-6050}
+    volumes:
+      # Docker socket for compose control
+      - /var/run/docker.sock:/var/run/docker.sock
+      # CasaOS standard paths
+      - /casaos/openrasp/apk-builder/project:/casaos/project
+      - /casaos/openrasp/apk-builder/output:/casaos/output
+      - /casaos/openrasp/apk-builder/project_src:/casaos/project_src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${WEBUI_PORT:-6050}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      casaos.icon: https://cdn-icons-png.flaticon.com/512/887/887843.png
+      casaos.category: Development
+      casaos.description: "Docker-based React Native/Expo APK builder with Web UI"
+
+  apk-builder-build:
+    image: cirrusci/android-sdk:latest
+    container_name: apk-builder-build
+    restart: "no"
+    entrypoint: ["/usr/local/bin/build.sh"]
+    volumes:
+      # Build script
+      - ./build.sh:/usr/local/bin/build.sh
+      # CasaOS standard paths
+      - /casaos/openrasp/apk-builder/project_src:/app
+      - /casaos/openrasp/apk-builder/output:/app/output
+      - /casaos/openrasp/apk-builder/gradle_cache:/root/.gradle
+      - /casaos/openrasp/apk-builder/npm_cache:/root/.npm
+    environment:
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    depends_on:
+      apk-builder-webui:
+        condition: service_healthy
+    labels:
+      casaos.icon: https://cdn-icons-png.flaticon.com/512/887/887843.png
