@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  apk-builder-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apk-builder-webui
+    restart: unless-stopped
+    ports:
+      - "${WEBUI_PORT:-6050}:${WEBUI_PORT:-6050}"
+    environment:
+      - PROJECT_DIR=/app/project
+      - OUTPUT_DIR=/app/output
+      - PROJECT_SRC_DIR=/app/project_src
+      - PORT=${WEBUI_PORT:-6050}
+    volumes:
+      # Docker socket for compose control
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Application context and compose file
+      - ./:/app/project
+      # Output directory for built APKs
+      - apk-builder-output:/app/output
+      # Project source directory
+      - apk-builder-project-src:/app/project_src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${WEBUI_PORT:-6050}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    x-casaos:
+      displayName: APK Builder
+      description: Docker-based React Native/Expo APK builder with Web UI
+      icon: https://reactnative.dev/img/pwa/manifest-icon.png
+      tags:
+        - Development
+        - Android
+        - Build
+      scheme: http
+      host: localhost
+      port: ${WEBUI_PORT:-6050}
+
+  apk-builder-build:
+    image: reactnativecommunity/react-native-android-build-env:latest
+    container_name: apk-builder-build
+    restart: "no"
+    entrypoint: ["/usr/local/bin/build.sh"]
+    volumes:
+      # Mount the shared project source directory
+      - ./build.sh:/usr/local/bin/build.sh
+      - apk-builder-project-src:/app
+      # APKs land here
+      - apk-builder-output:/app/output
+      # Cache gradle and npm deps
+      - apk-builder-gradle-cache:/root/.gradle
+      - apk-builder-npm-cache:/root/.npm
+    environment:
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    depends_on:
+      apk-builder-webui:
+        condition: service_healthy
+
+volumes:
+  apk-builder-output:
+  apk-builder-project-src:
+  apk-builder-gradle-cache:
+  apk-builder-npm-cache:
+
+x-casaos-ui:
+  port: ${WEBUI_PORT:-6050}

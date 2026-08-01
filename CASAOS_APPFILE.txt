@@ -1,0 +1,94 @@
+# CasaOS AppFile for APK Builder
+# This file can be imported directly into CasaOS or used as a reference
+
+name: apk-builder
+title: APK Builder
+category: Development
+description: Docker-based React Native/Expo APK builder with Web UI and real-time logging
+icon: https://raw.githubusercontent.com/zinngar/APK-builder-/main/templates/logo.png
+developer: zinngar
+homepage: https://github.com/zinngar/APK-builder-
+repo: https://github.com/zinngar/APK-builder-
+support: https://github.com/zinngar/APK-builder-/issues
+port: 6050
+image:
+  type: docker-compose
+  compose_file: casaos-appfile.yml
+services:
+  - name: apk-builder-webui
+    displayName: APK Builder Web UI
+    description: Web interface for building Android APKs
+    internal: false
+    protocol: http
+    port: 6050
+  - name: apk-builder-build
+    displayName: APK Builder Daemon
+    description: Builds React Native/Expo projects into APKs
+    internal: true
+    protocol: http
+capabilities:
+  - GitHub Integration
+  - ZIP Upload
+  - Release/Debug Builds
+  - Real-time Logs
+  - APK Management
+  - Gradle/NPM Caching
+volumes:
+  - name: apk-builder-output
+    mount: /output
+    display: APK Output
+  - name: apk-builder-project-src
+    mount: /project_src
+    display: Project Source
+  - name: apk-builder-gradle-cache
+    mount: /gradle-cache
+    display: Gradle Cache
+  - name: apk-builder-npm-cache
+    mount: /npm-cache
+    display: NPM Cache
+ports:
+  - port: 6050
+    display: Web UI Port
+    protocol: http
+    name: WEBUI_PORT
+environment:
+  - name: WEBUI_PORT
+    default: "6050"
+    display: Web UI Port
+    description: Port to run the Web UI on (default 6050)
+  - name: PROJECT_DIR
+    default: "/app/project"
+    display: Project Directory (Internal)
+  - name: OUTPUT_DIR
+    default: "/app/output"
+    display: Output Directory (Internal)
+  - name: PROJECT_SRC_DIR
+    default: "/app/project_src"
+    display: Project Source Directory (Internal)
+  - name: PORT
+    default: "6050"
+    display: Flask Port (Internal)
+system_requirements:
+  - name: CPU
+    value: "2 cores minimum"
+  - name: RAM
+    value: "4GB minimum"
+  - name: Storage
+    value: "10GB free space"
+  - name: Docker
+    value: "Latest version"
+  - name: Docker Compose
+    value: "v2.0 or later"
+recommended_for:
+  - React Native Developers
+  - Expo Users
+  - CI/CD Pipelines
+  - Multi-Project Build Farms
+tags:
+  - android
+  - apk
+  - react-native
+  - expo
+  - docker
+  - build
+  - development
